@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BRICS Summit &amp; Economic Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0E1F2E;
+    --panel: #15304A;
+    --panel-line: #24445F;
+    --gold: #C9A227;
+    --teal: #4FA8A0;
+    --clay: #C6693F;
+    --text: #EDE8DA;
+    --text-dim: #9FB2C0;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+  }
+  h1, h2, .stat-value { font-family: 'Source Serif 4', serif; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  header {
+    padding: 4rem 6vw 3rem;
+    border-bottom: 1px solid var(--panel-line);
+    background:
+      radial-gradient(ellipse at 15% -10%, rgba(201,162,39,0.18), transparent 55%),
+      var(--bg);
+  }
+  .eyebrow {
+    color: var(--gold);
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.9rem;
+  }
+  h1 {
+    font-size: clamp(2.1rem, 4.5vw, 3.4rem);
+    font-weight: 700;
+    margin: 0 0 0.6rem;
+    max-width: 16ch;
+  }
+  header p {
+    color: var(--text-dim);
+    max-width: 60ch;
+    font-size: 1.05rem;
+  }
+
+  main { padding: 3rem 6vw 5rem; max-width: 1280px; margin: 0 auto; }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1px;
+    background: var(--panel-line);
+    border: 1px solid var(--panel-line);
+    margin-bottom: 3.5rem;
+  }
+  .stat {
+    background: var(--panel);
+    padding: 1.6rem 1.4rem;
+  }
+  .stat-value {
+    font-size: 2.1rem;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .stat-label {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+  }
+  @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    padding: 1.8rem;
+  }
+  .panel h2 {
+    font-size: 1.15rem;
+    font-weight: 500;
+    margin: 0 0 1.3rem;
+  }
+  canvas { max-height: 320px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.55rem 0.5rem; border-bottom: 1px solid var(--panel-line); }
+  th { color: var(--text-dim); font-weight: 500; font-size: 0.78rem; }
+  td.num, th.num { text-align: right; font-family: 'IBM Plex Mono', monospace; }
+
+  .timeline-wrap { overflow-x: auto; }
+  .timeline { display: flex; gap: 0; min-width: 1980px; padding: 0.5rem 0 1rem; }
+  .tl-item {
+    flex: 1 0 110px;
+    border-left: 1px solid var(--panel-line);
+    padding: 0 0.7rem;
+    min-width: 110px;
+  }
+  .tl-year { color: var(--gold); font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; }
+  .tl-city { font-size: 0.85rem; margin: 0.25rem 0 0.1rem; overflow-wrap: break-word; hyphens: auto; line-height: 1.25; }
+  .tl-country { color: var(--text-dim); font-size: 0.75rem; overflow-wrap: break-word; }
+
+  footer {
+    padding: 2rem 6vw 3rem;
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    border-top: 1px solid var(--panel-line);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow mono">BRICS SUMMIT ANALYTICS — 18 EDITIONS, 2009–2026</div>
+  <h1>Seventeen years of a growing bloc</h1>
+  <p>An analysis of BRICS summit history and member-country economics, built around the 18th Summit hosted by India in New Delhi, September 2026.</p>
+</header>
+
+<main>
+  <div class="stat-row" id="statRow"></div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>GDP by member (Billion USD)</h2>
+      <canvas id="gdpChart"></canvas>
+    </div>
+    <div class="panel">
+      <h2>Membership growth</h2>
+      <canvas id="growthChart"></canvas>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Population vs GDP</h2>
+      <canvas id="scatterChart"></canvas>
+    </div>
+    <div class="panel">
+      <h2>Economic snapshot</h2>
+      <table id="econTable"></table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Summit timeline — host cities, 2009–2026</h2>
+    <div class="timeline-wrap">
+      <div class="timeline" id="timeline"></div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Compiled from public sources (IMF, World Bank, official BRICS/PIB summit records) for a data-analytics portfolio project. Figures are recent-year approximations, not official real-time statistics.
+</footer>
+
+<script>
+try {
+const DATA = {"countries": [{"country": "Brazil", "region": "South America", "joined_year": 2009, "population_millions": 213.0, "gdp_billion_usd": 2170, "gdp_growth_pct": 2.1, "gdp_per_capita_usd": 10188}, {"country": "Russia", "region": "Europe/Asia", "joined_year": 2009, "population_millions": 144.0, "gdp_billion_usd": 2050, "gdp_growth_pct": 1.4, "gdp_per_capita_usd": 14236}, {"country": "India", "region": "South Asia", "joined_year": 2009, "population_millions": 1440.0, "gdp_billion_usd": 3940, "gdp_growth_pct": 6.8, "gdp_per_capita_usd": 2736}, {"country": "China", "region": "East Asia", "joined_year": 2009, "population_millions": 1410.0, "gdp_billion_usd": 18500, "gdp_growth_pct": 4.8, "gdp_per_capita_usd": 13120}, {"country": "South Africa", "region": "Africa", "joined_year": 2011, "population_millions": 63.0, "gdp_billion_usd": 410, "gdp_growth_pct": 0.9, "gdp_per_capita_usd": 6508}, {"country": "Iran", "region": "Middle East", "joined_year": 2024, "population_millions": 91.0, "gdp_billion_usd": 465, "gdp_growth_pct": 3.5, "gdp_per_capita_usd": 5110}, {"country": "Egypt", "region": "Africa", "joined_year": 2024, "population_millions": 116.0, "gdp_billion_usd": 400, "gdp_growth_pct": 3.8, "gdp_per_capita_usd": 3448}, {"country": "Ethiopia", "region": "Africa", "joined_year": 2024, "population_millions": 132.0, "gdp_billion_usd": 160, "gdp_growth_pct": 6.1, "gdp_per_capita_usd": 1212}, {"country": "United Arab Emirates", "region": "Middle East", "joined_year": 2024, "population_millions": 10.5, "gdp_billion_usd": 550, "gdp_growth_pct": 3.9, "gdp_per_capita_usd": 52380}, {"country": "Indonesia", "region": "Southeast Asia", "joined_year": 2025, "population_millions": 283.0, "gdp_billion_usd": 1400, "gdp_growth_pct": 5.0, "gdp_per_capita_usd": 4947}, {"country": "Saudi Arabia", "region": "Middle East", "joined_year": 2024, "population_millions": 36.0, "gdp_billion_usd": 1100, "gdp_growth_pct": 3.4, "gdp_per_capita_usd": 30556}], "summits": [{"edition": 1, "year": 2009, "host_country": "Russia", "host_city": "Yekaterinburg", "theme": "Founding summit of BRIC", "format": "In-person", "members_count_at_summit": 4}, {"edition": 2, "year": 2010, "host_country": "Brazil", "host_city": "Brasilia", "theme": "Consolidating multipolar cooperation", "format": "In-person", "members_count_at_summit": 4}, {"edition": 3, "year": 2011, "host_country": "China", "host_city": "Sanya", "theme": "Broad Vision Shared Prosperity", "format": "In-person", "members_count_at_summit": 5}, {"edition": 4, "year": 2012, "host_country": "India", "host_city": "New Delhi", "theme": "BRICS Partnership for Global Stability Security and Prosperity", "format": "In-person", "members_count_at_summit": 5}, {"edition": 5, "year": 2013, "host_country": "South Africa", "host_city": "Durban", "theme": "BRICS and Africa Partnership for Development Integration and Industrialisation", "format": "In-person", "members_count_at_summit": 5}, {"edition": 6, "year": 2014, "host_country": "Brazil", "host_city": "Fortaleza", "theme": "Inclusive Growth Sustainable Solutions", "format": "In-person", "members_count_at_summit": 5}, {"edition": 7, "year": 2015, "host_country": "Russia", "host_city": "Ufa", "theme": "BRICS Partnership a Powerful Factor of Global Development", "format": "In-person", "members_count_at_summit": 5}, {"edition": 8, "year": 2016, "host_country": "India", "host_city": "Goa", "theme": "Building Responsive Inclusive and Collective Solutions", "format": "In-person", "members_count_at_summit": 5}, {"edition": 9, "year": 2017, "host_country": "China", "host_city": "Xiamen", "theme": "BRICS Stronger Partnership for a Brighter Future", "format": "In-person", "members_count_at_summit": 5}, {"edition": 10, "year": 2018, "host_country": "South Africa", "host_city": "Johannesburg", "theme": "BRICS in Africa Collaboration for Inclusive Growth and Shared Prosperity", "format": "In-person", "members_count_at_summit": 5}, {"edition": 11, "year": 2019, "host_country": "Brazil", "host_city": "Brasilia", "theme": "Economic Growth for an Innovative Future", "format": "In-person", "members_count_at_summit": 5}, {"edition": 12, "year": 2020, "host_country": "Russia", "host_city": "Moscow", "theme": "BRICS Partnership for Global Stability Shared Security and Innovative Growth", "format": "Virtual", "members_count_at_summit": 5}, {"edition": 13, "year": 2021, "host_country": "India", "host_city": "New Delhi", "theme": "BRICS@15 Intra-BRICS Cooperation for Continuity Consolidation and Consensus", "format": "Virtual", "members_count_at_summit": 5}, {"edition": 14, "year": 2022, "host_country": "China", "host_city": "Beijing", "theme": "Foster High-Quality BRICS Partnership Usher in a New Era for Global Development", "format": "Virtual", "members_count_at_summit": 5}, {"edition": 15, "year": 2023, "host_country": "South Africa", "host_city": "Johannesburg", "theme": "BRICS and Africa Partnership for Mutually Accelerated Growth Sustainable Development and Inclusive Multilateralism", "format": "In-person", "members_count_at_summit": 5}, {"edition": 16, "year": 2024, "host_country": "Russia", "host_city": "Kazan", "theme": "Strengthening Multilateralism for Just Global Development and Security", "format": "In-person", "members_count_at_summit": 9}, {"edition": 17, "year": 2025, "host_country": "Brazil", "host_city": "Rio de Janeiro", "theme": "Strengthening Global South Cooperation for More Inclusive and Sustainable Governance", "format": "In-person", "members_count_at_summit": 10}, {"edition": 18, "year": 2026, "host_country": "India", "host_city": "New Delhi", "theme": "Building for Resilience Innovation Cooperation and Sustainability", "format": "In-person", "members_count_at_summit": 11}]};
+
+const palette = ['#C9A227', '#4FA8A0', '#C6693F', '#8AA9C4', '#8E7CC3', '#6FA96F', '#D98C4A'];
+
+// --- Stat row ---
+const c = DATA.countries;
+const totalGDP = c.reduce((s,x)=>s+x.gdp_billion_usd,0);
+const totalPop = c.reduce((s,x)=>s+x.population_millions,0);
+const avgGrowth = (c.reduce((s,x)=>s+x.gdp_growth_pct,0)/c.length).toFixed(1);
+const stats = [
+  ['11', 'Current member countries'],
+  [`$${(totalGDP/1000).toFixed(1)}T`, 'Combined nominal GDP'],
+  [`${totalPop.toFixed(0)}M`, 'Combined population'],
+  [`${avgGrowth}%`, 'Average GDP growth'],
+  ['18', 'Summits held, 2009–2026'],
+];
+document.getElementById('statRow').innerHTML = stats.map(([v,l]) =>
+  `<div class="stat"><div class="stat-value">${v}</div><div class="stat-label">${l}</div></div>`
+).join('');
+
+// --- GDP bar chart ---
+const sortedByGDP = [...c].sort((a,b)=>b.gdp_billion_usd-a.gdp_billion_usd);
+new Chart(document.getElementById('gdpChart'), {
+  type: 'bar',
+  data: {
+    labels: sortedByGDP.map(x=>x.country),
+    datasets: [{
+      data: sortedByGDP.map(x=>x.gdp_billion_usd),
+      backgroundColor: '#C9A227',
+      borderRadius: 2,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#9FB2C0' }, grid: { color: '#24445F' } },
+      y: { ticks: { color: '#EDE8DA' }, grid: { display: false } }
+    }
+  }
+});
+
+// --- Membership growth line chart ---
+const joinYears = [...new Set(c.map(x=>x.joined_year))].sort((a,b)=>a-b);
+let cum = 0;
+const cumData = joinYears.map(y => {
+  cum += c.filter(x=>x.joined_year===y).length;
+  return cum;
+});
+new Chart(document.getElementById('growthChart'), {
+  type: 'line',
+  data: {
+    labels: joinYears,
+    datasets: [{
+      data: cumData,
+      borderColor: '#4FA8A0',
+      backgroundColor: 'rgba(79,168,160,0.15)',
+      fill: true,
+      tension: 0.25,
+      pointBackgroundColor: '#4FA8A0',
+    }]
+  },
+  options: {
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#9FB2C0' }, grid: { color: '#24445F' } },
+      y: { ticks: { color: '#9FB2C0' }, grid: { color: '#24445F' } }
+    }
+  }
+});
+
+// --- Population vs GDP scatter ---
+const regions = [...new Set(c.map(x=>x.region))];
+new Chart(document.getElementById('scatterChart'), {
+  type: 'scatter',
+  data: {
+    datasets: regions.map((r,i) => ({
+      label: r,
+      data: c.filter(x=>x.region===r).map(x=>({x:x.population_millions, y:x.gdp_billion_usd, country:x.country})),
+      backgroundColor: palette[i % palette.length],
+      pointRadius: 7,
+    }))
+  },
+  options: {
+    plugins: {
+      legend: { labels: { color: '#EDE8DA', boxWidth: 12 } },
+      tooltip: { callbacks: { label: (ctx) => `${ctx.raw.country}: ${ctx.raw.x}M pop, $${ctx.raw.y}B GDP` } }
+    },
+    scales: {
+      x: { title: { display:true, text:'Population (millions)', color:'#9FB2C0' }, ticks: { color: '#9FB2C0' }, grid: { color: '#24445F' } },
+      y: { title: { display:true, text:'GDP (Billion USD)', color:'#9FB2C0' }, ticks: { color: '#9FB2C0' }, grid: { color: '#24445F' } }
+    }
+  }
+});
+
+// --- Econ table ---
+const tbl = document.getElementById('econTable');
+tbl.innerHTML = `<thead><tr><th>Country</th><th class="num">GDP ($B)</th><th class="num">Growth</th><th class="num">Per capita</th></tr></thead><tbody>` +
+  sortedByGDP.map(x => `<tr><td>${x.country}</td><td class="num">${x.gdp_billion_usd.toLocaleString()}</td><td class="num">${x.gdp_growth_pct}%</td><td class="num">$${x.gdp_per_capita_usd.toLocaleString()}</td></tr>`).join('') +
+  `</tbody>`;
+
+// --- Timeline ---
+const tl = document.getElementById('timeline');
+tl.innerHTML = DATA.summits.map(s => `
+  <div class="tl-item">
+    <div class="tl-year">${s.year}</div>
+    <div class="tl-city">${s.host_city}</div>
+    <div class="tl-country">${s.host_country}</div>
+  </div>
+`).join('');
+} catch (err) {
+  document.querySelector('main').innerHTML =
+    '<div class="panel" style="border-color:#C6693F"><h2 style="color:#C6693F">Dashboard failed to load</h2><p style="color:var(--text-dim)">' + err.message + '</p></div>';
+  console.error(err);
+}
+</script>
+</body>
+</html>
